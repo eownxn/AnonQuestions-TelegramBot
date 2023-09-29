@@ -3,7 +3,7 @@ from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.filters import Command, CommandStart
-
+from aiogram.exceptions import TelegramBadRequest
 from app.filters import *
 from app.logging import log
 
@@ -41,9 +41,12 @@ async def process_text(msg: Message, state: FSMContext) -> None:
 
     data = await state.get_data()
 
-    await bot.send_message(chat_id=data['id_'], text=f'📨 Получено новое сообщение:\n\n{msg.text}')
+    try:
+        await bot.send_message(chat_id=data['id_'], text=f'📨 Получено новое сообщение:\n\n{msg.text}')
+        await msg.answer(text='Сообщение успешно отправлено!')
+    except TelegramBadRequest:
+        await msg.answer(text='Не удалось отправить сообщение этому пользователю!')
 
-    await msg.answer(text='Сообщение успешно отправлено!')
     await state.clear()
 
 
