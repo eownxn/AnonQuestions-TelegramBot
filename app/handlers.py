@@ -1,5 +1,5 @@
 from aiogram import Router, F
-from aiogram.types import ReplyKeyboardRemove
+from aiogram.types import ReplyKeyboardRemove, CallbackQuery
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.filters import Command, CommandStart
@@ -15,7 +15,12 @@ user_router = Router()
 class Form(StatesGroup):
     text_: str = State()
     sender_id: int = State()
-    id_: int = State()  # receiver_id
+    id_: int = State()
+    cached_id: int = State()
+
+
+class Form2(StatesGroup):
+    text_: str = State()
 
 
 @user_router.message(F.text.startswith('/start') and BasedFilter(text=F.message.text))
@@ -29,6 +34,7 @@ async def get_message(msg: Message, state: FSMContext) -> None:
         await msg.answer(text=f'💬Сейчас ты можешь написать сообщение тому человеку, '
                               f'который опубликовал эту ссылку\n\n✍🏻 Напиши своё сообщение:',
                          reply_markup=cancel)
+
         await state.set_state(Form.text_)
 
     except ValueError:
@@ -49,18 +55,33 @@ async def cancel_handler(msg: Message, state: FSMContext) -> None:
                      reply_markup=ReplyKeyboardRemove())
 
 
+@user_router.callback_query()
+async def answer_back(cb: CallbackQuery, state: FSMContext) -> None:
+    from main import bot
+
+    new_id = cb.data[7::]
+
+    await state.update_data(id_=new_id)
+    await bot.send_message(chat_id=cb.from_user.id,
+                           text=f'Отправьте ваш ответ на анонимное сообщение',
+                           reply_markup=cancel)
+    await state.set_state(Form.text_)
+
+
 @user_router.message(Form.text_)
 async def process_text(msg: Message, state: FSMContext) -> None:
     from main import bot
 
     log(msg=msg)
 
-    await state.update_data(sender_id=msg.from_user.id)
+    await state.update_data(sender_id=msg.from_user.id, )
     data = await state.get_data()
     print(data)
+
     try:
         await bot.send_message(chat_id=data['id_'], text=f'📨 Получено новое сообщение:\n\n{msg.text}',
-                               reply_markup=new_message)
+                               reply_markup=InlineKeyboardMarkup(
+                                   inline_keyboard=new_message_inline_kb(str(msg.from_user.id))))
         await msg.answer(text='Сообщение успешно отправлено!',
                          reply_markup=ReplyKeyboardRemove())
 
