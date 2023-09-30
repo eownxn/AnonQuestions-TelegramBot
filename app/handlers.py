@@ -1,10 +1,12 @@
 from aiogram import Router, F
-from aiogram.types import Message
+from aiogram.types import ReplyKeyboardRemove
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.filters import Command, CommandStart
 from aiogram.exceptions import TelegramBadRequest
+
 from app.filters import *
+from app.keyboards import *
 from app.logging import log
 
 user_router = Router()
@@ -12,7 +14,8 @@ user_router = Router()
 
 class Form(StatesGroup):
     text_: str = State()
-    id_: int = State()
+    sender_id: int = State()
+    id_: int = State()  # receiver_id
 
 
 @user_router.message(F.text.startswith('/start') and BasedFilter(text=F.message.text))
@@ -24,7 +27,8 @@ async def get_message(msg: Message, state: FSMContext) -> None:
         log(msg=msg)
         await state.update_data(id_=int(msg.text[7::]))
         await msg.answer(text=f'💬Сейчас ты можешь написать сообщение тому человеку, '
-                              f'который опубликовал эту ссылку\n\n✍🏻 Напиши своё сообщение:')
+                              f'который опубликовал эту ссылку\n\n✍🏻 Напиши своё сообщение:',
+                         reply_markup=cancel)
         await state.set_state(Form.text_)
 
     except ValueError:
@@ -33,17 +37,33 @@ async def get_message(msg: Message, state: FSMContext) -> None:
         pass
 
 
+@user_router.message(F.text == "Отмена")
+async def cancel_handler(msg: Message, state: FSMContext) -> None:
+    current_state = await state.get_state()
+    if current_state is None:
+        return
+
+    await state.clear()
+
+    await msg.answer(text="Вы отменили отправку сообщения!",
+                     reply_markup=ReplyKeyboardRemove())
+
+
 @user_router.message(Form.text_)
 async def process_text(msg: Message, state: FSMContext) -> None:
     from main import bot
 
     log(msg=msg)
 
+    await state.update_data(sender_id=msg.from_user.id)
     data = await state.get_data()
-
+    print(data)
     try:
-        await bot.send_message(chat_id=data['id_'], text=f'📨 Получено новое сообщение:\n\n{msg.text}')
-        await msg.answer(text='Сообщение успешно отправлено!')
+        await bot.send_message(chat_id=data['id_'], text=f'📨 Получено новое сообщение:\n\n{msg.text}',
+                               reply_markup=new_message)
+        await msg.answer(text='Сообщение успешно отправлено!',
+                         reply_markup=ReplyKeyboardRemove())
+
     except TelegramBadRequest:
         await msg.answer(text='Не удалось отправить сообщение этому пользователю!')
 
