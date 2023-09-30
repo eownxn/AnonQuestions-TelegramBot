@@ -1,35 +1,43 @@
-from aiogram import Router, F
-from aiogram.types import ReplyKeyboardRemove, CallbackQuery
+from aiogram import F, Router
+from aiogram.types import (InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup,
+                           ReplyKeyboardRemove, CallbackQuery, Message)
 from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import State, StatesGroup
-from aiogram.filters import Command, CommandStart
 from aiogram.exceptions import TelegramBadRequest
+from aiogram.filters import CommandStart, Command
 
-from app.filters import *
-from app.keyboards import *
-from app.logging import log
+from app.filters import AnyDigitsInMsgFilter
+from app.handlers.states import Form
+from app.kb_and_cmd import cancel, new_msg_ikb, help_ikb
 
 user_router = Router()
 
 
-class Form(StatesGroup):
-    text_: str = State()
-    sender_id: int = State()
-    id_: int = State()
-    cached_id: int = State()
+@user_router.message(Command('help', prefix='/'))
+async def help_command(msg: Message) -> None:
+    await msg.answer(text='Что вас интересует?',
+                     reply_markup=InlineKeyboardMarkup(inline_keyboard=help_ikb))
 
 
-class Form2(StatesGroup):
-    text_: str = State()
+@user_router.callback_query(F.data == 'info:command')
+async def help_inline(cb: CallbackQuery) -> None:
+    from main import bot
+    await bot.send_message(chat_id=cb.from_user.id,
+                           text='Will be soon!')
 
 
-@user_router.message(F.text.startswith('/start') and BasedFilter(text=F.message.text))
+@user_router.callback_query(F.data == 'feedback:command')
+async def help_inline(cb: CallbackQuery) -> None:
+    from main import bot
+    await bot.send_message(chat_id=cb.from_user.id,
+                           text='Для того, чтобы связаться с владельцем, напишите: @eownxn')
+
+
+@user_router.message(F.text.startswith('/start') and AnyDigitsInMsgFilter(text=F.message.text))
 async def get_message(msg: Message, state: FSMContext) -> None:
     try:
         if int(msg.text[7::]) == msg.from_user.id:
-            await msg.answer(text=f'⛔️ Извини, но ты не можешь отправить сообщение самому себе')
+            await msg.answer(text=f'⛔️ Ты не можешь отправить сообщение самому себе!')
             raise KeyError
-        log(msg=msg)
         await state.update_data(id_=int(msg.text[7::]))
         await msg.answer(text=f'💬Сейчас ты можешь написать сообщение тому человеку, '
                               f'который опубликовал эту ссылку\n\n✍🏻 Напиши своё сообщение:',
@@ -72,16 +80,13 @@ async def answer_back(cb: CallbackQuery, state: FSMContext) -> None:
 async def process_text(msg: Message, state: FSMContext) -> None:
     from main import bot
 
-    log(msg=msg)
-
     await state.update_data(sender_id=msg.from_user.id, )
     data = await state.get_data()
     print(data)
 
     try:
         await bot.send_message(chat_id=data['id_'], text=f'📨 Получено новое сообщение:\n\n{msg.text}',
-                               reply_markup=InlineKeyboardMarkup(
-                                   inline_keyboard=new_message_inline_kb(str(msg.from_user.id))))
+                               reply_markup=InlineKeyboardMarkup(inline_keyboard=new_msg_ikb(str(msg.from_user.id))))
         await msg.answer(text='Сообщение успешно отправлено!',
                          reply_markup=ReplyKeyboardRemove())
 
@@ -93,7 +98,6 @@ async def process_text(msg: Message, state: FSMContext) -> None:
 
 @user_router.message(CommandStart())
 async def start(msg: Message) -> None:
-    log(msg=msg)
     await msg.answer(text=f'🔗 Вот твоя личная ссылка:\n\n' +
                           f't.me/an0nym0us_questi0ns_bot?start={msg.from_user.id}\n\n' +
                           f'Опубликуй её и получай анонимные сообщения')
