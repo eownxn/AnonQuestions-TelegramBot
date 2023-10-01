@@ -20,14 +20,14 @@ async def help_command(msg: Message) -> None:
 
 @user_router.callback_query(F.data == 'info:command')
 async def help_inline(cb: CallbackQuery) -> None:
-    from main import bot
+    from app import bot
     await bot.send_message(chat_id=cb.from_user.id,
                            text='Will be soon!')
 
 
 @user_router.callback_query(F.data == 'feedback:command')
 async def help_inline(cb: CallbackQuery) -> None:
-    from main import bot
+    from app import bot
     await bot.send_message(chat_id=cb.from_user.id,
                            text='Для того, чтобы связаться с владельцем, напишите: @eownxn')
 
@@ -65,7 +65,7 @@ async def cancel_handler(msg: Message, state: FSMContext) -> None:
 
 @user_router.callback_query()
 async def answer_back(cb: CallbackQuery, state: FSMContext) -> None:
-    from main import bot
+    from app import bot
 
     new_id = cb.data[7::]
 
@@ -78,7 +78,7 @@ async def answer_back(cb: CallbackQuery, state: FSMContext) -> None:
 
 @user_router.message(Form.text_)
 async def process_text(msg: Message, state: FSMContext) -> None:
-    from main import bot
+    from app import bot
 
     await state.update_data(sender_id=msg.from_user.id, )
     data = await state.get_data()
