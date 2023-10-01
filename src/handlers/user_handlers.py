@@ -1,3 +1,5 @@
+from dotenv import dotenv_values
+
 from aiogram import F, Router
 from aiogram.types import (InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup,
                            ReplyKeyboardRemove, CallbackQuery, Message)
@@ -5,11 +7,12 @@ from aiogram.fsm.context import FSMContext
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.filters import CommandStart, Command
 
-from app.filters import AnyDigitsInMsgFilter
-from app.handlers.states import Form
-from app.kb_and_cmd import cancel, new_msg_ikb, help_ikb
+from src.filters import AnyDigitsInMsgFilter
+from src.handlers.states import Form
+from src.kb_and_cmd import cancel, new_msg_ikb, help_ikb
 
 user_router = Router()
+BOT_USERNAME = token = dotenv_values(".env")['BOT_TOKEN']
 
 
 @user_router.message(Command('help', prefix='/'))
@@ -99,7 +102,7 @@ async def process_text(msg: Message, state: FSMContext) -> None:
 @user_router.message(CommandStart())
 async def start(msg: Message) -> None:
     await msg.answer(text=f'🔗 Вот твоя личная ссылка:\n\n' +
-                          f't.me/an0nym0us_questi0ns_bot?start={msg.from_user.id}\n\n' +
+                          f't.me/{BOT_USERNAME}?start={msg.from_user.id}\n\n' +
                           f'Опубликуй её и получай анонимные сообщения')
 
 
