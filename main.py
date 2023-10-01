@@ -6,9 +6,6 @@ from config import BOT_TOKEN
 from app.handlers.user_handlers import user_router
 from app.handlers.admin_handlers import admin_router
 
-# from app.kb_and_cmd import set_start_command
-
-
 dp = Dispatcher()
 bot = Bot(token=BOT_TOKEN)
 
