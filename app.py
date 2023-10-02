@@ -1,4 +1,3 @@
-import logging
 from dotenv import dotenv_values
 
 from aiogram import Dispatcher, Bot
@@ -6,11 +5,6 @@ from aiogram.methods.delete_webhook import DeleteWebhook
 
 from src.handlers.user_handlers import user_router
 from src.handlers.admin_handlers import admin_router
-
-logger = logging.getLogger(__name__)
-logging.basicConfig(
-    level=logging.INFO,
-    format=u'%(filename)s:%(lineno)d #%(levelname)-8s [%(asctime)s] - %(name)s - %(message)s', )
 
 dp = Dispatcher()
 bot = Bot(token=dotenv_values(".env")['BOT_TOKEN'])

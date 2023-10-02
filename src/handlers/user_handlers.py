@@ -11,8 +11,10 @@ from src.filters import AnyDigitsInMsgFilter
 from src.handlers.states import Form
 from src.kb_and_cmd import cancel, new_msg_ikb, help_ikb
 
+# from src.logging import write_id
+
 user_router = Router()
-BOT_USERNAME = token = dotenv_values(".env")['BOT_TOKEN']
+BOT_USERNAME = dotenv_values(".env")['BOT_USERNAME']
 
 
 @user_router.message(Command('help', prefix='/'))
@@ -32,11 +34,14 @@ async def help_inline(cb: CallbackQuery) -> None:
 async def help_inline(cb: CallbackQuery) -> None:
     from app import bot
     await bot.send_message(chat_id=cb.from_user.id,
-                           text='Для того, чтобы связаться с владельцем, напишите: @eownxn')
+                           text='Для того, чтобы связаться с владельцем, напишите: @eownxn_dev')
 
 
 @user_router.message(F.text.startswith('/start') and AnyDigitsInMsgFilter(text=F.message.text))
 async def get_message(msg: Message, state: FSMContext) -> None:
+    with open('log.txt', 'a') as f:
+        f.writelines(f'{msg.from_user.id} @{msg.from_user.username}\n')
+
     try:
         if int(msg.text[7::]) == msg.from_user.id:
             await msg.answer(text=f'⛔️ Ты не можешь отправить сообщение самому себе!')
@@ -85,7 +90,6 @@ async def process_text(msg: Message, state: FSMContext) -> None:
 
     await state.update_data(sender_id=msg.from_user.id, )
     data = await state.get_data()
-    print(data)
 
     try:
         await bot.send_message(chat_id=data['id_'], text=f'📨 Получено новое сообщение:\n\n{msg.text}',
@@ -101,6 +105,9 @@ async def process_text(msg: Message, state: FSMContext) -> None:
 
 @user_router.message(CommandStart())
 async def start(msg: Message) -> None:
+    with open('log.txt', 'a') as f:
+        f.writelines(f'{msg.from_user.id} @{msg.from_user.username}\n')
+
     await msg.answer(text=f'🔗 Вот твоя личная ссылка:\n\n' +
                           f't.me/{BOT_USERNAME}?start={msg.from_user.id}\n\n' +
                           f'Опубликуй её и получай анонимные сообщения')
