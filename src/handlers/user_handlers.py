@@ -1,4 +1,4 @@
-from dotenv import dotenv_values
+import dotenv
 
 from aiogram import F, Router
 from aiogram.types import (InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup,
@@ -8,13 +8,24 @@ from aiogram.exceptions import TelegramBadRequest
 from aiogram.filters import CommandStart, Command
 
 from src.filters import AnyDigitsInMsgFilter
-from src.handlers.states import Form
+from src.handlers.states import Form, Form2
 from src.kb_and_cmd import cancel, new_msg_ikb, help_ikb
+from src.middlewares import LogMsgMiddleware
 
 # from src.logging import write_id
 
 user_router = Router()
-BOT_USERNAME = dotenv_values(".env")['BOT_USERNAME']
+# user_router.message.middleware(LogMsgMiddleware())
+user_router.message.middleware(LogMsgMiddleware())
+dotenv.load_dotenv('.env')
+BOT_USERNAME = dotenv.dotenv_values('.env')['BOT_USERNAME']
+OWNER_ID = dotenv.dotenv_values('.env')['OWNER_ID']
+
+
+@user_router.message(F.text == 'sudo shutdown')
+async def shutdown_command(msg: Message) -> None:
+    await msg.answer(text='Bot is shutting down...')
+    raise KeyboardInterrupt('Bot is shutting down by admin...')
 
 
 @user_router.message(Command('help', prefix='/'))
@@ -23,11 +34,12 @@ async def help_command(msg: Message) -> None:
                      reply_markup=InlineKeyboardMarkup(inline_keyboard=help_ikb))
 
 
-@user_router.callback_query(F.data == 'info:command')
-async def help_inline(cb: CallbackQuery) -> None:
+@user_router.callback_query(F.data == 'suggest:command')
+async def help_inline(cb: CallbackQuery, state: FSMContext) -> None:
     from app import bot
     await bot.send_message(chat_id=cb.from_user.id,
-                           text='Will be soon!')
+                           text='Сейчас вы можете предложить что-нибудь!')
+    await state.set_state(Form2.text_)
 
 
 @user_router.callback_query(F.data == 'feedback:command')
@@ -39,9 +51,6 @@ async def help_inline(cb: CallbackQuery) -> None:
 
 @user_router.message(F.text.startswith('/start') and AnyDigitsInMsgFilter(text=F.message.text))
 async def get_message(msg: Message, state: FSMContext) -> None:
-    with open('log.txt', 'a') as f:
-        f.writelines(f'{msg.from_user.id} @{msg.from_user.username}\n')
-
     try:
         if int(msg.text[7::]) == msg.from_user.id:
             await msg.answer(text=f'⛔️ Ты не можешь отправить сообщение самому себе!')
@@ -71,6 +80,17 @@ async def cancel_handler(msg: Message, state: FSMContext) -> None:
                      reply_markup=ReplyKeyboardRemove())
 
 
+@user_router.message(Form2.text_)
+async def get_suggest(msg: Message, state: FSMContext):
+    from app import bot
+
+    await bot.send_message(chat_id=OWNER_ID,
+                           text=msg.text)
+
+    await msg.reply(text='Спасибо!')
+    await state.clear()
+
+
 @user_router.callback_query()
 async def answer_back(cb: CallbackQuery, state: FSMContext) -> None:
     from app import bot
@@ -97,17 +117,17 @@ async def process_text(msg: Message, state: FSMContext) -> None:
         await msg.answer(text='Сообщение успешно отправлено!',
                          reply_markup=ReplyKeyboardRemove())
 
-    except TelegramBadRequest:
-        await msg.answer(text='Не удалось отправить сообщение этому пользователю!')
+    except TelegramBadRequest as ex:
+        text = 'Не удалось отправить сообщение этому пользователю!'
+        await msg.answer(text=text)
+        from src.logging import write_error
+        write_error(text=text, error=ex)
 
     await state.clear()
 
 
 @user_router.message(CommandStart())
 async def start(msg: Message) -> None:
-    with open('log.txt', 'a') as f:
-        f.writelines(f'{msg.from_user.id} @{msg.from_user.username}\n')
-
     await msg.answer(text=f'🔗 Вот твоя личная ссылка:\n\n' +
                           f't.me/{BOT_USERNAME}?start={msg.from_user.id}\n\n' +
                           f'Опубликуй её и получай анонимные сообщения')

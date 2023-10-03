@@ -21,6 +21,6 @@ cancel = ReplyKeyboardMarkup(keyboard=cancel_kb,
 #        scope=BotCommandScopeDefault()
 #    )
 
-help_ikb = [[InlineKeyboardButton(text='📱 Информация', callback_data='info:command')],
+help_ikb = [[InlineKeyboardButton(text='📱 Предложить что-нибудь', callback_data='suggest:command')],
             #            [InlineKeyboardButton(text='🚥 Старт', callback_data='start:command')],
             [InlineKeyboardButton(text='✈️ Обратная связь', callback_data='feedback:command')]]

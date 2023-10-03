@@ -1,17 +1,19 @@
-from aiogram.types import Message  # , CallbackQuery
-
-from datetime import datetime as dt
-
-
-def get_id(msg: Message) -> None:
-    with open(file=f'log.txt', mode='w+', encoding='UTF-8') as f:
-        if str(msg.from_user.id) not in f.readlines():
-            f.write(f'id{str(msg.from_user.id)} @{msg.from_user.username}\n')
+from datetime import datetime
+from aiogram.types import Message, CallbackQuery
 
 
-def log_msg(msg: Message):
-    print(f'{dt.now().strftime("%Y-%m-%d %H:%M:%S")} @{msg.from_user.username}(id{msg.from_user.id})\nText: {msg.text}')
+def write_file(event: Message | CallbackQuery) -> True:
+    with open(f'logs/{datetime.now().strftime("%d-%m")}_log.txt', 'a', encoding='UTF-8') as f:
+        if type(event) == Message:
+            text = f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} @{event.from_user.username} ' + \
+                   f'(id{event.from_user.id})\nText: {event.text}\n\n'
+        elif type(event) == CallbackQuery:
+            text = f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} @{event.from_user.username} ' + \
+                   f'(id{event.from_user.id})\nText: {event.data}\n\n'
+        f.write(text)
+        return True
 
 
-def log_msg_alt():
-    pass
+def write_error(text: str, error) -> True:
+    with open(f'logs/{datetime.now().strftime("%d-%m")}_log.txt', 'a', encoding='UTF-8') as f:
+        f.write(str(f'Bot: {text}\nError: {error}\n\n'))
