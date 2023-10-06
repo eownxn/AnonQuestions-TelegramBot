@@ -10,7 +10,7 @@ $ pip install -r requirements.txt
 
 Create a file with name config.py and put there:
 
-BOT_TOKEN = 'your telegram bot token here'
+bot_token, bot_username, your_id
 
 $ python main.py
 
