@@ -1,8 +1,8 @@
 import dotenv
 
 from aiogram import F, Router
-from aiogram.types import (InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup,
-                           ReplyKeyboardRemove, CallbackQuery, Message)
+from aiogram.types import (InlineKeyboardMarkup, ReplyKeyboardRemove,
+                           CallbackQuery, Message)
 from aiogram.fsm.context import FSMContext
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.filters import CommandStart, Command
@@ -10,22 +10,11 @@ from aiogram.filters import CommandStart, Command
 from src.filters import AnyDigitsInMsgFilter
 from src.handlers.states import Form, Form2
 from src.kb_and_cmd import cancel, new_msg_ikb, help_ikb
-from src.middlewares import LogMsgMiddleware
-
-# from src.logging import write_id
 
 user_router = Router()
-# user_router.message.middleware(LogMsgMiddleware())
-user_router.message.middleware(LogMsgMiddleware())
 dotenv.load_dotenv('.env')
 BOT_USERNAME = dotenv.dotenv_values('.env')['BOT_USERNAME']
 OWNER_ID = dotenv.dotenv_values('.env')['OWNER_ID']
-
-
-@user_router.message(F.text == 'sudo shutdown')
-async def shutdown_command(msg: Message) -> None:
-    await msg.answer(text='Bot is shutting down...')
-    raise KeyboardInterrupt('Bot is shutting down by admin...')
 
 
 @user_router.message(Command('help', prefix='/'))

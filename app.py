@@ -5,10 +5,7 @@ from aiogram.methods.delete_webhook import DeleteWebhook
 
 from src.handlers.user_handlers import user_router
 
-from src.middlewares import LogCbMiddleware
-
 dp = Dispatcher()
-dp.callback_query.outer_middleware(LogCbMiddleware())
 bot = Bot(token=dotenv.dotenv_values(".env")['BOT_TOKEN'])
 
 
@@ -25,7 +22,7 @@ async def main() -> None:
 
 
 async def including_routers() -> None:
-    routers = (user_router, admin_router)
+    routers = (user_router,)
 
     for __router in routers:
         dp.include_router(__router)

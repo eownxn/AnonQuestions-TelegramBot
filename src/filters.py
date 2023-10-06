@@ -1,10 +1,5 @@
 from aiogram.filters import BaseFilter
 from aiogram.types import Message
-from aiogram import F
-
-
-# from typing import Any, Container
-# from magic_filter.magic import MagicFilter, MagicT
 
 
 class AnyDigitsInMsgFilter(BaseFilter):
