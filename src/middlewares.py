@@ -1,7 +1,6 @@
 from aiogram import BaseMiddleware
 from aiogram.types import Message, CallbackQuery
 from typing import Callable, Awaitable, Dict, Any
-from datetime import datetime
 from src.logging import write_file
 
 

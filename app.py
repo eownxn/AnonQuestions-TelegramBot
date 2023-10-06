@@ -4,7 +4,7 @@ from aiogram import Dispatcher, Bot
 from aiogram.methods.delete_webhook import DeleteWebhook
 
 from src.handlers.user_handlers import user_router
-from src.handlers.admin_handlers import admin_router
+
 from src.middlewares import LogCbMiddleware
 
 dp = Dispatcher()
